@@ -15,6 +15,7 @@ export default {
       editando: false, // Flag para saber se estamos editando ou criando um novo aluno
       indexEdicao: null, // Armazena o índice do aluno que está sendo editado
       termoPesquisa: '', // Variável para armazenar o termo de pesquisa
+      formSubmetido: false, // Para controlar se o formulário foi enviado
     };
   },
 
@@ -35,7 +36,7 @@ export default {
       // Substituir ponto por vírgula para exibição
       valor = valor.replace('.', ',');
 
-      // Verificar se o número está no intervalo de 1 a 10
+      // Verificar se o número está no intervalo de 0 a 10
       const numero = parseFloat(valor.replace(',', '.'));
       if (numero < 0 || numero > 10) {
         valor = ''; // Limpar o campo se fora do intervalo
@@ -45,38 +46,74 @@ export default {
       this.novoAluno[campo] = valor;
     },
 
+
     // Método para calcular a situação do aluno com base nas notas
     calcularSituacao(media1, media2) {
       const nota1 = parseFloat(media1.replace(',', '.'));
       const nota2 = parseFloat(media2.replace(',', '.'));
-      if (nota1 >= 6 && nota2 >= 6) return "Aprovado";
-      if (nota1 < 6 && !nota2) return "Em Recuperação";
-      if (nota1 < 6 && nota2 >= 6) return "Aprovado";
-      if (nota1 >= 6 && nota2 < 6) return "Aprovado";
-      if (nota1 >= 6 && !nota2) return "Em Recuperação";
 
-      return "Reprovado"; // Retorna "Reprovado" para todas as outras condições
+      // Calcular a média
+      const media = (nota1 + nota2) / 2;
+
+      // Determinar a situação
+      let situacao = '';
+      if (media >= 7) {
+        situacao = 'Aprovado';
+      } else if (media >= 5) {
+        situacao = 'Em Exame';
+      } else {
+        situacao = 'Reprovado';
+      }
+
+      return {
+        media: media.toFixed(2), // Arredonda para duas casas decimais
+        situacao: situacao
+      };
     },
+
+    validarCampos() {
+      // Verifica se algum campo está vazio
+      if (!this.novoAluno.nome || !this.novoAluno.media1 || !this.novoAluno.media2) {
+        return false; // Se algum campo estiver vazio, não permite o cadastro
+      }
+      return true; // Se todos os campos estiverem preenchidos
+    },
+
 
     // Método para cadastrar ou atualizar alunos
     cadastrar() {
+      this.formSubmetido = true; // Ativa a verificação de submissão do formulário
+
+      // Validar se todos os campos estão preenchidos
+      if (!this.validarCampos()) {
+        return; // Não prossegue se algum campo estiver vazio
+      }
+
+      // Calcular a situação do aluno com as notas fornecidas
+      const situacao = this.calcularSituacao(this.novoAluno.media1, this.novoAluno.media2);
+
       // Aqui utilizo o this para acessar propriedades e métodos do componente Vue. Ao invés do then mostrado no curso (mais indicado para operação assíncronas)
       if (this.editando) {
         // Se estamos editando, atualiza o aluno na lista
         this.alunos[this.indexEdicao] = {
-          ...this.novoAluno, // Copia os valores do formulário
-          situacao: this.calcularSituacao(this.novoAluno.media1, this.novoAluno.media2),
-        }; // Calcula a nova situação
-        this.editando = false; //Aqui sai do modo de edição
-        this.indexEdicao = null; //Limpa o índice da edição
+          ...this.novoAluno,
+          media: situacao.media,
+          situacao: situacao.situacao,
+        };
+        this.editando = false;
+        this.indexEdicao = null;
       } else {
         // Se estamos cadastrando um novo aluno
-        this.novoAluno.situacao = this.calcularSituacao(this.novoAluno.media1, this.novoAluno.media2); // Calcula a situação
-        this.alunos.push({ ...this.novoAluno }); //Adiciona o aluno à lista
+        this.alunos.push({
+          ...this.novoAluno,
+          media: situacao.media,
+          situacao: situacao.situacao,
+        });
       }
-      this.salvarNoLocalStorage(); // Salva os dados no Local Storage
-      // Reseta o formulário para ficar vazio
+      // Limpa os campos do formulário e reseta o estado do formulário
       this.novoAluno = { nome: '', media1: '', media2: '', situacao: '' };
+      this.formSubmetido = false; // Reset do estado de submissão
+      this.salvarNoLocalStorage(); // Salva os dados no LocalStorage
     },
 
     // Método para carregar os dados de um aluno no formulário, permitindo edição
@@ -136,55 +173,75 @@ export default {
   <body>
     <div class="grid-container">
       <h1 class="titulo">Bem-vindo ao Sistema de Gerenciamento de Notas</h1>
+
+      <!-- Formulário para cadastrar ou editar alunos -->
       <!-- Formulário para cadastrar ou editar alunos -->
       <form class="from-group formulario" @submit.prevent="cadastrar">
-        <!-- Campo para o nome do aluno -->
         <div>
           <input
             class="form-control"
             type="text"
             v-model="novoAluno.nome"
             placeholder="Nome do Aluno"
+            :class="{ 'is-invalid': formSubmetido && !novoAluno.nome }"
             required
           />
+          <div v-if="formSubmetido && !novoAluno.nome" class="invalid-feedback">
+            O nome do aluno é obrigatório.
+          </div>
         </div>
 
-        <!-- Campo para a primeira nota -->
         <div>
           <input
             class="form-control"
             type="text"
             v-model="novoAluno.media1"
             placeholder="1ª Nota"
+            :class="{ 'is-invalid': formSubmetido && !novoAluno.media1 }"
             required
             @input="validarNota('media1')"
           />
+          <div
+            v-if="formSubmetido && !novoAluno.media1"
+            class="invalid-feedback"
+          >
+            A 1ª nota é obrigatória.
+          </div>
         </div>
 
-        <!-- Campo para a segunda nota -->
         <div>
           <input
             class="form-control"
             type="text"
             v-model="novoAluno.media2"
             placeholder="2ª Nota"
+            :class="{ 'is-invalid': formSubmetido && !novoAluno.media2 }"
             @input="validarNota('media2')"
           />
+          <div
+            v-if="formSubmetido && !novoAluno.media2"
+            class="invalid-feedback"
+          >
+            A 2ª nota é obrigatória.
+          </div>
         </div>
-        <!-- Botão para enviar o formulário -->
+
         <button class="btn btn-success cadastrar" type="submit">
           {{ editando ? "Salvar Alterações" : "Cadastrar" }}
         </button>
       </form>
+
       <div class="grid-exportar">
         <button @click="exportarJSON" class="btn btn-secondary exportar">
           Exportar Lista
         </button>
       </div>
+
       <!-- Tabela para exibir a lista de alunos -->
       <div v-if="alunos.length === 0" class="alert alert-info text-center">
         Nenhum aluno cadastrado.
       </div>
+
       <div class="grid-exportar">
         <input
           v-if="alunos.length > 0"
@@ -194,18 +251,19 @@ export default {
           v-model="termoPesquisa"
         />
       </div>
+
       <table class="table table-hover table-dark">
         <thead>
           <tr>
             <th>Nome</th>
             <th>1ª Nota</th>
             <th>2ª Nota</th>
+            <th>Média Geral</th>
             <th>Situação</th>
             <th>Ações</th>
           </tr>
         </thead>
         <tbody>
-          <!-- Loop para renderizar os alunos -->
           <tr
             v-for="(aluno, index) in alunos.filter((aluno) =>
               aluno.nome.toLowerCase().includes(termoPesquisa.toLowerCase())
@@ -215,24 +273,25 @@ export default {
             <td>{{ aluno.nome }}</td>
             <td>{{ aluno.media1 }}</td>
             <td>{{ aluno.media2 }}</td>
+            <td>{{ aluno.media }}</td>
+            <!-- Exibe a média calculada -->
             <td
               :class="{
                 aprovado: aluno.situacao === 'Aprovado',
+                emExame: aluno.situacao === 'Em Exame',
                 reprovado: aluno.situacao === 'Reprovado',
-                recuperacao: aluno.situacao === 'Em Recuperação',
               }"
             >
               {{ aluno.situacao }}
+              <!-- Exibe a situação calculada -->
             </td>
             <td>
-              <!-- Botão para editar -->
               <button
                 class="btn btn-sm btn-warning editar"
                 @click="editar(index)"
               >
                 Editar
               </button>
-              <!-- Botão para remover -->
               <button
                 class="btn btn-sm btn-danger remover"
                 @click="remover(index)"
@@ -246,6 +305,7 @@ export default {
     </div>
   </body>
 </template>
+
 
 <!-- CSS -->
 <style scoped>
@@ -330,10 +390,11 @@ tbody tr:last-child td {
   font-weight: bold;
 }
 
-.recuperacao {
+.emExame {
   color: #ffc107;
   font-weight: bold;
 }
+
 .editar {
   margin-right: 8px;
 }
