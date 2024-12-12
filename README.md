@@ -11,7 +11,7 @@ Este é um projeto simples de **Gerenciador de Notas Escolares** desenvolvido co
 
 Caso a média do aluno fique abaixo de um determinado valor, o sistema irá apontar se ele está **de Recuperação** ou **Reprovado**.
 
-Foi um projeto realizado com o intuito de **testar meus conhecimentos em Vue.js**, após um curso da tecnologia. Utilizei também **Bootstrap** para o design e **CSS puro** para customizações.
+Foi um projeto realizado com o intuito de **testar meus conhecimentos em Vue.js**, após um curso da tecnologia. Utilizei também **Bootstrap** para o design e **CSS** para customizações.
 
 ## ⚙️ Tecnologias Utilizadas
 
@@ -45,8 +45,8 @@ Foi um projeto realizado com o intuito de **testar meus conhecimentos em Vue.js*
 
 ## 🎯 Funcionalidades
 
-- **Cadastro de Alunos**: Adicione alunos informando nome e. ✍️
-- **Cadastro de Notas**: Insira as notas de cada aluno e o sistema calcula automaticamente a média. 📚
+- **Cadastro de Alunos**: Adicione alunos informando nome. ✍️
+- **Cadastro de Notas**: Insira as notas de cada aluno e o sistema calcula automaticamente a situação. 📚
 - **Avaliação de Status**: O sistema calcula se o aluno está **Aprovado**, **de Recuperação** ou **Reprovado** com base nas notas. 🎓
 - **Edição e Exclusão de Alunos**: Alunos podem ser editados ou removidos do sistema. ❌📝
 
